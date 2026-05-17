@@ -10,5 +10,9 @@ class Settings(BaseSettings):
 
     model_config = {"env_file": ".env"}
 
-
 settings = Settings()
+print(f"API KEY LOADED: {settings.anthropic_api_key[:10]}...")
+print(f"SUPABASE URL: {settings.supabase_url}")
+print(f"SUPABASE KEY: {settings.supabase_key[:10]}...")
+print(f"MODEL: {settings.model_name}")
+print(f"ENVIRONMENT: {settings.environment}")

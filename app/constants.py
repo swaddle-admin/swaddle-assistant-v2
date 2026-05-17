@@ -1,34 +1,21 @@
-from app.models.schemas import IntentType
-
-SCHEDULE_KEYWORDS = [
-    "reminder",
+SCHEDULE_CREATE_KEYWORDS = [
     "remind",
     "schedule",
-    "appointment",
-    "booking",
     "book",
     "set up",
-    "arrange",
-    "feeding",
-    "feed",
     "bedtime",
-    "routine",
-    "notify",
-    "notification",
-    "tomorrow",
-    "tonight",
-    "next week",
-    "every day",
-    "daily",
-    "weekly",
-    "nap",
-    "wake",
     "alarm",
-    "plan",
+]
+
+SCHEDULE_VIEW_KEYWORDS = [
+    "my schedule",
+    "what's scheduled",
+    "what is scheduled",
+    "upcoming",
+    "my reminders",
 ]
 
 DEFAULT_MAX_TOKENS = 1024
-INTENT_CONFIDENCE_RULE = "rule"
 SSE_DONE_SIGNAL = "data: [DONE]\n\n"
 SSE_MEDIA_TYPE = "text/event-stream"
 SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}

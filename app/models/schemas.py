@@ -5,7 +5,8 @@ from pydantic import BaseModel
 
 class IntentType(str, Enum):
     GENERAL_CHAT = "general_chat"
-    SCHEDULE = "schedule"
+    SCHEDULE_CREATE = "schedule_create"
+    SCHEDULE_VIEW = "schedule_view"
     UNKNOWN = "unknown"
 
 
@@ -13,12 +14,10 @@ class ChatRequest(BaseModel):
     prompt: str
     user_id: str
     timezone: str = "UTC"
-    chat_history: list[dict] = []
 
 
 class IntentResult(BaseModel):
     intent: IntentType
-    confidence: str
     matched_keyword: str | None = None
 
 

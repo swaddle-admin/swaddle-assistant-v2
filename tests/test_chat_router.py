@@ -1,7 +1,7 @@
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.models.schemas import IntentType
 
 client = TestClient(app)
 
@@ -12,29 +12,25 @@ def test_health():
     assert response.json() == {"status": "ok"}
 
 
-def test_schedule_intent_returns_json():
+def test_schedule_create_returns_json():
     response = client.post("/chat/", json={
-        "prompt": "remind me to feed the baby at 3pm",
+        "prompt": "remind me at 3pm",
         "user_id": "test_user",
         "timezone": "Europe/London",
     })
     assert response.status_code == 200
     data = response.json()
-    assert data["intent"] == "schedule"
-    assert data["matched_keyword"] == "remind"
+    assert data["intent"] == IntentType.SCHEDULE_CREATE
+    assert "message" in data
 
 
-def test_save_history_returns_ok():
-    response = client.post("/chat/history", json={
+def test_schedule_view_returns_json():
+    response = client.post("/chat/", json={
+        "prompt": "show my schedule",
         "user_id": "test_user",
-        "messages": [
-            {"role": "user", "content": "hello"},
-            {"role": "assistant", "content": "hi there"},
-        ],
-        "summary": "greeting",
-        "last_actions": [],
+        "timezone": "Europe/London",
     })
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "ok"
-    assert data["saved"] == 2
+    assert data["intent"] == IntentType.SCHEDULE_VIEW
+    assert "message" in data
