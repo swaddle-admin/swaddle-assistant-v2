@@ -1,19 +1,14 @@
 import time
 from collections.abc import AsyncGenerator
-from pathlib import Path
 
 import anthropic
 from anthropic.types import MessageParam
 
 from app.config import settings
 from app.constants import DEFAULT_MAX_TOKENS
+from app.services.system_prompt import build_chat_system
 
 _client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-_persona = Path("app/persona.txt").read_text().strip()
-
-
-def _build_system(extra: str = "") -> str:
-    return f"{_persona}\n\n{extra}".strip()
 
 
 def _build_benchmark(start: float, usage: anthropic.types.Usage) -> dict:
@@ -25,13 +20,13 @@ def _build_benchmark(start: float, usage: anthropic.types.Usage) -> dict:
     }
 
 
-async def stream_chat(prompt: str) -> AsyncGenerator[str, None]:
+async def stream_chat(user_id: int, prompt: str) -> AsyncGenerator[str, None]:
     start = time.perf_counter()
 
     async with _client.messages.stream(
         model=settings.model_name,
         max_tokens=DEFAULT_MAX_TOKENS,
-        system=_build_system(),
+        system=await build_chat_system(user_id),
         messages=[MessageParam(role="user", content=prompt)],
     ) as stream:
         async for token in stream.text_stream:
@@ -41,13 +36,13 @@ async def stream_chat(prompt: str) -> AsyncGenerator[str, None]:
         yield f"\n\n[meta]{_build_benchmark(start, usage)}[/meta]"
 
 
-async def call_model(prompt: str, system_extra: str = "") -> tuple[str, dict]:
+async def call_model(user_id: int, prompt: str) -> tuple[str, dict]:
     start = time.perf_counter()
 
     response = await _client.messages.create(
         model=settings.model_name,
         max_tokens=DEFAULT_MAX_TOKENS,
-        system=_build_system(system_extra),
+        system=await build_chat_system(user_id),
         messages=[MessageParam(role="user", content=prompt)],
     )
 

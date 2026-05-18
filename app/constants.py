@@ -5,6 +5,7 @@ SCHEDULE_CREATE_KEYWORDS = [
     "set up",
     "bedtime",
     "alarm",
+    "remember"
 ]
 
 SCHEDULE_VIEW_KEYWORDS = [

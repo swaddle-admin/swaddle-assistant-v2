@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     supabase_key: str = ""
     model_name: str = "claude-sonnet-4-20250514"
     environment: str = "development"
+    user_context_url: str = "http://localhost:3000/user-context"
 
     model_config = {"env_file": ".env"}
 
@@ -16,3 +17,4 @@ print(f"SUPABASE URL: {settings.supabase_url}")
 print(f"SUPABASE KEY: {settings.supabase_key[:10]}...")
 print(f"MODEL: {settings.model_name}")
 print(f"ENVIRONMENT: {settings.environment}")
+print(f"USER CONTEXT URL: {settings.user_context_url}")
