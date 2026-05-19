@@ -12,9 +12,8 @@ class IntentType(str, Enum):
 
 class ChatRequest(BaseModel):
     prompt: str
-    user_id: str
+    user_id: int
     timezone: str = "UTC"
-
 
 class IntentResult(BaseModel):
     intent: IntentType

@@ -17,7 +17,7 @@ async def chat(request: ChatRequest):
     if intent.intent == IntentType.SCHEDULE_VIEW:
         return {"intent": intent.intent, "message": "It looks like you're trying to view your schedule!"}
 
-    return stream_response(request.prompt)
+    return stream_response(request.user_id, request.prompt)
 
 
 @router.post("/history")
