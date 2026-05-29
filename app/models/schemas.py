@@ -25,3 +25,28 @@ class SaveHistoryRequest(BaseModel):
     messages: list[dict]
     summary: str = ""
     last_actions: list[str] = []
+
+class ChildRef(BaseModel):
+    id: int
+    name: str
+
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+class ScheduleIntentRequest(BaseModel):
+    prompt: str
+    user_name: str
+    timezone: str
+    children: list[ChildRef]
+    chat_history: list[ChatMessage] = []
+
+class ScheduleIntentResponse(BaseModel):
+    action_suggested: str | None
+    title: str | None
+    start_time: str | None
+    task_frequency: str | None
+    location: str | None
+    child_refs: list[ChildRef]
+    can_book: bool
+    message: str

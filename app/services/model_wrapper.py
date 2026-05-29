@@ -36,7 +36,7 @@ async def stream_chat(user_id: int, prompt: str) -> AsyncGenerator[str, None]:
         yield f"\n\n[meta]{_build_benchmark(start, usage)}[/meta]"
 
 
-async def call_model(user_id: int, prompt: str) -> tuple[str, dict]:
+async def call_model(user_id: int, prompt: str, system_prompt: str) -> tuple[str, dict]:
     start = time.perf_counter()
 
     response = await _client.messages.create(

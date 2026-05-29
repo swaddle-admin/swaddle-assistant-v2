@@ -12,7 +12,7 @@ async def chat(request: ChatRequest):
     intent = detect_intent(request.prompt)
 
     if intent.intent == IntentType.SCHEDULE_CREATE:
-        return {"intent": intent.intent, "message": "It looks like you're trying to schedule something!"}
+        return stream_response(request.user_id, request.prompt)
 
     if intent.intent == IntentType.SCHEDULE_VIEW:
         return {"intent": intent.intent, "message": "It looks like you're trying to view your schedule!"}
