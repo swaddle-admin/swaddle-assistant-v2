@@ -20,13 +20,24 @@ async def get_user_context(user_id: int) -> str:
 
 async def get_user_object(user_id: int) -> UserContext:
     async with httpx.AsyncClient(timeout=10.0) as client:
-        resp = await client.get(f"{settings.user_context_url}/user-context/{user_id}/system-prompt")
+        resp = await client.get(
+            f"{settings.user_context_url}/user-context/{user_id}/snapshot"
+        )
+
         if resp.status_code != 200:
-            raise HTTPException(status_code=502, detail="Unable to fetch user context")
-        payload = resp.json()
+            raise HTTPException(
+                status_code=502,
+                detail="Unable to fetch user context",
+            )
 
-    user_context_text = payload.get("user_context_text")
-    if not user_context_text:
-        raise HTTPException(status_code=502, detail="Invalid user context response")
+    payload = resp.json()
 
-    return user_context_text
+    user_context = payload.get("snapshot")
+
+    if not user_context:
+        raise HTTPException(
+            status_code=502,
+            detail="Invalid user context response",
+        )
+
+    return UserContext.model_validate(user_context)
