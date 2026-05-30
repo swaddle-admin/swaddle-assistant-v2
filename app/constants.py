@@ -16,7 +16,6 @@ SCHEDULE_VIEW_KEYWORDS = [
     "my reminders",
 ]
 
-DEFAULT_MAX_TOKENS = 1024
 SSE_DONE_SIGNAL = "data: [DONE]\n\n"
 SSE_MEDIA_TYPE = "text/event-stream"
 SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}

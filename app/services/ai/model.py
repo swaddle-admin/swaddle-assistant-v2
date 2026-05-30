@@ -4,7 +4,6 @@ from typing import Any
 from anthropic.types import MessageParam
 
 from app.config import settings
-from app.constants import DEFAULT_MAX_TOKENS
 from app.services.ai.anthropic_client import client
 from app.services.ai.benchmark import build_benchmark
 
@@ -33,7 +32,7 @@ async def call_ai(
 
     response = await client.messages.create(
         model=settings.model_name,
-        max_tokens=DEFAULT_MAX_TOKENS,
+        max_tokens=settings.default_max_tokens,
         system=system_prompt,
         messages=_build_messages(prompt, history),
     )
