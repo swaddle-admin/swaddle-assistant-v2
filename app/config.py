@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str
     supabase_url: str = ""
     supabase_key: str = ""
-    model_name: str = "claude-3-5-haiku-20241022"
+    model_name: str = "claude-sonnet-4-6"
     environment: str = "development"
     user_context_url: str = "http://localhost:3000/user-context"
     chat_history_limit: int = 3

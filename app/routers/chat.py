@@ -2,7 +2,13 @@ import json
 
 from fastapi import APIRouter
 
-from app.models.schemas import ChatRequest, IntentType, IntentResult, ScheduleViewResponse
+from app.models.schemas import (
+    ChatRequest,
+    IntentType,
+    IntentResult,
+    ScheduleIntentResponse,
+    ScheduleViewResponse,
+)
 from app.services.ai import stream_response, call_ai
 from app.services.chat_history import get_chat_history
 from app.services.intent_router import detect_intent
@@ -20,7 +26,8 @@ async def chat(request: ChatRequest):
 
     if detection.intent == IntentType.SCHEDULE_CREATE:
         response_text, benchmark = await call_ai(request.prompt, system_prompt, history)
-        return {"response": response_text, "benchmark": benchmark}
+        parsed = ScheduleIntentResponse.model_validate_json(response_text)
+        return {"response": parsed.model_dump(), "benchmark": benchmark}
 
     if detection.intent == IntentType.SCHEDULE_VIEW:
         response_text, benchmark = await call_ai(request.prompt, system_prompt, history)
