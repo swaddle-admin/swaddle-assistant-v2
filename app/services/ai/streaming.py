@@ -9,13 +9,14 @@ from app.services.ai.model import _build_messages
 async def stream_ai(
     prompt: str,
     system_prompt: str,
+    history: list | None = None,
 ) -> AsyncGenerator[str, None]:
 
     async with client.messages.stream(
         model=settings.model_name,
         max_tokens=DEFAULT_MAX_TOKENS,
         system=system_prompt,
-        messages=_build_messages(prompt),
+        messages=_build_messages(prompt, history),
     ) as stream:
         async for token in stream.text_stream:
             yield token

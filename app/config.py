@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     model_name: str = "claude-sonnet-4-20250514"
     environment: str = "development"
     user_context_url: str = "http://localhost:3000/user-context"
+    chat_history_url: str = "http://localhost:3000"
+    chat_history_limit: int = 3
+    task_manager_url: str = "http://localhost:3006/task-manager"
 
     model_config = {"env_file": ".env"}
 

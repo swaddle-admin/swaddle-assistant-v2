@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -31,8 +32,22 @@ class ChildRef(BaseModel):
     name: str
 
 class ChatMessage(BaseModel):
-    role: str  # "user" | "assistant"
+    role: str
     content: str
+
+
+ChatRole = Literal["user", "assistant"]
+
+
+class ChatMessageInsert(BaseModel):
+    userId: int
+    role: ChatRole
+    content: str
+
+
+class ChatMessageResponse(ChatMessageInsert):
+    id: int
+    created_at: str
 
 class ScheduleIntentRequest(BaseModel):
     prompt: str
@@ -49,4 +64,11 @@ class ScheduleIntentResponse(BaseModel):
     location: str | None
     child_refs: list[ChildRef]
     can_book: bool
+    message: str
+
+
+class ScheduleViewResponse(BaseModel):
+    start_date: str | None
+    end_date: str | None
+    can_fetch: bool
     message: str

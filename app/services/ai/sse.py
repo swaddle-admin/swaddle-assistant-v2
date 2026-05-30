@@ -29,6 +29,7 @@ def _to_sse(
 async def _event_stream(
     prompt: str,
     system_prompt: str,
+    history: list | None = None,
 ) -> AsyncGenerator[str, None]:
     start = time.perf_counter()
 
@@ -37,7 +38,7 @@ async def _event_stream(
             model=settings.model_name,
             max_tokens=DEFAULT_MAX_TOKENS,
             system=system_prompt,
-            messages=_build_messages(prompt),
+            messages=_build_messages(prompt, history),
         ) as stream:
             async for token in stream.text_stream:
                 yield _to_sse({
@@ -70,12 +71,14 @@ async def _event_stream(
 def stream_response(
     prompt: str,
     system_prompt: str,
+    history: list | None = None,
 ) -> StreamingResponse:
 
     return StreamingResponse(
         _event_stream(
             prompt=prompt,
             system_prompt=system_prompt,
+            history=history,
         ),
         media_type=SSE_MEDIA_TYPE,
         headers=SSE_HEADERS,

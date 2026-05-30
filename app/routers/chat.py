@@ -1,9 +1,13 @@
+import json
+
 from fastapi import APIRouter
 
-from app.models.schemas import ChatRequest, IntentType, SaveHistoryRequest, IntentResult
+from app.models.schemas import ChatRequest, IntentType, IntentResult, ScheduleViewResponse
 from app.services.ai import stream_response, call_ai
+from app.services.chat_history import get_chat_history
 from app.services.intent_router import detect_intent
 from app.services.system_prompt import get_system_prompt
+from app.services.task_manager import get_tasks_in_range, summarize_tasks
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -12,20 +16,30 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 async def chat(request: ChatRequest):
     detection: IntentResult = detect_intent(request.prompt)
     system_prompt = await get_system_prompt(detection.intent, request.user_id, request.timezone)
+    history = get_chat_history(request.user_id)
 
     if detection.intent == IntentType.SCHEDULE_CREATE:
-        return await call_ai(request.prompt,system_prompt)
+        response_text, benchmark = await call_ai(request.prompt, system_prompt, history)
+        return {"response": response_text, "benchmark": benchmark}
 
     if detection.intent == IntentType.SCHEDULE_VIEW:
-        return {"intent": detection.intent, "message": "It looks like you're trying to view your schedule!"}
+        response_text, benchmark = await call_ai(request.prompt, system_prompt, history)
+        parsed = ScheduleViewResponse.model_validate_json(response_text)
 
-    return stream_response(request.prompt, system_prompt)
+        if not parsed.can_fetch:
+            return {"response": parsed.message, "benchmark": benchmark}
 
+        tasks_data = await get_tasks_in_range(
+            request.user_id,
+            parsed.start_date,
+            parsed.end_date,
+            request.timezone
+        )
 
-@router.post("/history")
-async def save_history(request: SaveHistoryRequest):
-    return {
-        "status": "ok",
-        "user_id": request.user_id,
-        "saved": len(request.messages),
-    }
+        if "error" in tasks_data:
+            return {"response": tasks_data["error"], "benchmark": benchmark}
+
+        summary = summarize_tasks(tasks_data)
+        return {"response": summary, "benchmark": benchmark}
+
+    return stream_response(request.prompt, system_prompt, history)

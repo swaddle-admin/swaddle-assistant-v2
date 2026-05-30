@@ -22,6 +22,9 @@ async def get_system_prompt(
                 timezone=timezone,
             )
 
+        case IntentType.SCHEDULE_VIEW:
+            return build_schedule_view(timezone=timezone)
+
         case _:
             return await build_chat_system(user_id=user_id)
 
@@ -131,5 +134,63 @@ async def build_schedule_create(
           ],
           "can_book": true,
           "message": "Swimming booked for Zara every Tuesday at 4pm!"
+        }}
+        """.strip()
+
+
+def build_schedule_view(timezone: str) -> str:
+    return f"""
+        You are Swaddle's schedule view intent parser.
+
+        Return JSON only.
+        No prose.
+        No markdown.
+
+        Rules:
+        - Extract the date range from the user's message.
+        - If only one date is mentioned, use it as both start and end date.
+        - If no date is mentioned, infer from keywords like "today", "tomorrow", "this week", "next week", "this month".
+        - Dates must be in YYYY-MM-DD format.
+        - If you cannot determine dates, set can_fetch to false and ask for clarification in message.
+        - Use the user's timezone to resolve relative dates.
+
+        Timezone:
+        {timezone}
+
+        Return this shape:
+        {{
+          "start_date": string | null,
+          "end_date": string | null,
+          "can_fetch": boolean,
+          "message": string
+        }}
+
+        Examples:
+
+        User: "what's my schedule today?"
+        Response:
+        {{
+          "start_date": "2026-05-30",
+          "end_date": "2026-05-30",
+          "can_fetch": true,
+          "message": "Fetching your schedule for today"
+        }}
+
+        User: "show my schedule for this week"
+        Response:
+        {{
+          "start_date": "2026-05-25",
+          "end_date": "2026-05-31",
+          "can_fetch": true,
+          "message": "Fetching your schedule for this week"
+        }}
+
+        User: "upcoming reminders"
+        Response:
+        {{
+          "start_date": "2026-05-30",
+          "end_date": "2026-06-06",
+          "can_fetch": true,
+          "message": "Fetching your upcoming reminders"
         }}
         """.strip()
