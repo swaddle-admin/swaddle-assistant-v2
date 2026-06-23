@@ -79,6 +79,7 @@ async def build_schedule_create(
           return null for all fields and a friendly message.
         - start_time must be ISO datetime format.
         - Use the user's timezone.
+        - Return ONLY valid JSON, without any markdown formatting or code fences.
         
         User:
         {user_name}
@@ -153,6 +154,7 @@ def build_schedule_view(timezone: str) -> str:
         - Dates must be in YYYY-MM-DD format.
         - If you cannot determine dates, set can_fetch to false and ask for clarification in message.
         - Use the user's timezone to resolve relative dates.
+        - Return ONLY valid JSON, without any markdown formatting or code fences.
 
         Timezone:
         {timezone}
