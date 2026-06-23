@@ -1,6 +1,7 @@
 import json
 
 from fastapi import APIRouter
+from pydantic import ValidationError
 
 from app.models.schemas import (
     ChatRequest,
@@ -26,7 +27,11 @@ async def chat(request: ChatRequest):
 
     if detection.intent == IntentType.SCHEDULE_CREATE:
         response_text, benchmark = await call_ai(request.prompt, system_prompt, history)
-        parsed = ScheduleIntentResponse.model_validate_json(response_text)
+        try:
+            parsed = ScheduleIntentResponse.model_validate_json(response_text)
+        except ValidationError as e:
+            print(e)
+            raise
         return {"response": parsed.model_dump(), "benchmark": benchmark}
 
     if detection.intent == IntentType.SCHEDULE_VIEW:
