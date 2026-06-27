@@ -22,6 +22,7 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 @router.post("/")
 async def chat(request: ChatRequest):
     detection: IntentResult = detect_intent(request.prompt)
+    print(f"detected response {detection.intent}")
     system_prompt = await get_system_prompt(detection.intent, request.user_id, request.timezone)
     history = get_chat_history(request.user_id)
 
