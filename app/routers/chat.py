@@ -24,6 +24,7 @@ async def chat(request: ChatRequest):
     detection: IntentResult = detect_intent(request.prompt)
     print(f"detected response {detection.intent}")
     system_prompt = await get_system_prompt(detection.intent, request.user_id, request.timezone)
+    print(f"system promp: {system_prompt}")
     history = get_chat_history(request.user_id)
 
     if detection.intent == IntentType.SCHEDULE_CREATE:
