@@ -22,13 +22,14 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 @router.post("/")
 async def chat(request: ChatRequest):
     detection: IntentResult = detect_intent(request.prompt)
-    print(f"detected response {detection.intent}")
+    print(f"Detected response {detection.intent}")
     system_prompt = await get_system_prompt(detection.intent, request.user_id, request.timezone)
-    print(f"system promp: {system_prompt}")
+    print(f"System prompt: {system_prompt}")
     history = get_chat_history(request.user_id)
 
     if detection.intent == IntentType.SCHEDULE_CREATE:
         response_text, benchmark = await call_ai(request.prompt, system_prompt, history)
+        print(f"Response text: {response_text}")
         try:
             parsed = ScheduleIntentResponse.model_validate_json(response_text)
         except ValidationError as e:
