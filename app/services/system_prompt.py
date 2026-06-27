@@ -80,7 +80,7 @@ async def build_schedule_create(
         - start_time must be ISO datetime format.
         - Use the user's timezone.
         - Return ONLY valid JSON, without any markdown formatting or code fences.
-        
+
         User:
         {user_name}
         

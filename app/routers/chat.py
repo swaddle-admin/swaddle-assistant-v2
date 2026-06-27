@@ -1,4 +1,5 @@
 import json
+import re
 
 from fastapi import APIRouter
 from pydantic import ValidationError
@@ -19,18 +20,29 @@ from app.services.task_manager import get_tasks_in_range, summarize_tasks
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
+def parse_llm_json(raw: str):
+    raw = raw.strip()
+
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+
+    return json.loads(raw)
+
+
 @router.post("/")
 async def chat(request: ChatRequest):
     detection: IntentResult = detect_intent(request.prompt)
-    print(f"detected response {detection.intent}")
+    print(f"Detected response {detection.intent}")
     system_prompt = await get_system_prompt(detection.intent, request.user_id, request.timezone)
-    print(f"system promp: {system_prompt}")
+    print(f"System prompt: {system_prompt}")
     history = get_chat_history(request.user_id)
 
     if detection.intent == IntentType.SCHEDULE_CREATE:
         response_text, benchmark = await call_ai(request.prompt, system_prompt, history)
+        print(f"Response text: {response_text}")
         try:
-            parsed = ScheduleIntentResponse.model_validate_json(response_text)
+            cleaned_json = parse_llm_json(response_text)
+            parsed = ScheduleIntentResponse.model_validate(cleaned_json)
         except ValidationError as e:
             print(e)
             raise
