@@ -3,6 +3,33 @@ from typing import List
 from app.models.schemas import ChatMessageInsert, ChatMessageResponse
 from app.services.supabase_client import get_supabase_client
 
+# Maximum number of messages to keep per user (10 turns = 20 messages)
+MAX_MESSAGES_PER_USER = 20
+
+
+def _prune_old_messages(user_id: int) -> None:
+    """Delete messages beyond the limit for a user."""
+    supabase = get_supabase_client()
+
+    # Get all message IDs for this user, ordered by creation time
+    result = supabase.table("chat_messages")\
+        .select("id")\
+        .eq("user_id", user_id)\
+        .order("created_at", desc=False)\
+        .execute()
+
+    message_ids = [row["id"] for row in result.data]
+
+    # If we have more than the limit, delete the oldest ones
+    if len(message_ids) > MAX_MESSAGES_PER_USER:
+        ids_to_delete = message_ids[:len(message_ids) - MAX_MESSAGES_PER_USER]
+
+        for msg_id in ids_to_delete:
+            supabase.table("chat_messages")\
+                .delete()\
+                .eq("id", msg_id)\
+                .execute()
+
 
 def add_message(payload: ChatMessageInsert) -> ChatMessageResponse:
     supabase = get_supabase_client()
@@ -16,6 +43,10 @@ def add_message(payload: ChatMessageInsert) -> ChatMessageResponse:
     result = supabase.table("chat_messages").insert(data).execute()
 
     row = result.data[0]
+
+    # Prune old messages after inserting
+    _prune_old_messages(payload.userId)
+
     return ChatMessageResponse(
         id=row["id"],
         userId=row["user_id"],
