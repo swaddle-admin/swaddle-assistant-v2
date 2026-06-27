@@ -1,62 +1,128 @@
-from datetime import datetime
-from typing import Dict, List
+from typing import List
 
-from app.config import settings
 from app.models.schemas import ChatMessageInsert, ChatMessageResponse
+from app.services.supabase_client import get_supabase_client
+
+# Maximum number of messages to keep per user (10 turns = 20 messages)
+MAX_MESSAGES_PER_USER = 20
 
 
-_history: Dict[int, List[ChatMessageResponse]] = {}
-_next_id = 1
+def _prune_old_messages(user_id: int) -> None:
+    """Delete messages beyond the limit for a user."""
+    supabase = get_supabase_client()
 
+    # Get all message IDs for this user, ordered by creation time
+    result = supabase.table("chat_messages")\
+        .select("id")\
+        .eq("user_id", user_id)\
+        .order("created_at", desc=False)\
+        .execute()
 
-def _prune_history(history: List[ChatMessageResponse]) -> None:
-    limits = {"user": settings.chat_history_limit, "assistant": settings.chat_history_limit}
-    for role in ("user", "assistant"):
-        count = 0
-        for i in range(len(history) - 1, -1, -1):
-            if history[i].role != role:
-                continue
-            count += 1
-            if count > limits[role]:
-                history.pop(i)
+    message_ids = [row["id"] for row in result.data]
+
+    # If we have more than the limit, delete the oldest ones
+    if len(message_ids) > MAX_MESSAGES_PER_USER:
+        ids_to_delete = message_ids[:len(message_ids) - MAX_MESSAGES_PER_USER]
+
+        for msg_id in ids_to_delete:
+            supabase.table("chat_messages")\
+                .delete()\
+                .eq("id", msg_id)\
+                .execute()
 
 
 def add_message(payload: ChatMessageInsert) -> ChatMessageResponse:
-    global _next_id
-    msg = ChatMessageResponse(
-        id=_next_id,
-        userId=payload.userId,
-        role=payload.role,
-        content=payload.content,
-        created_at=datetime.utcnow().isoformat() + "Z",
+    supabase = get_supabase_client()
+
+    data = {
+        "user_id": payload.userId,
+        "role": payload.role,
+        "content": payload.content,
+    }
+
+    result = supabase.table("chat_messages").insert(data).execute()
+
+    row = result.data[0]
+
+    # Prune old messages after inserting
+    _prune_old_messages(payload.userId)
+
+    return ChatMessageResponse(
+        id=row["id"],
+        userId=row["user_id"],
+        role=row["role"],
+        content=row["content"],
+        created_at=row["created_at"],
     )
-    _next_id += 1
-
-    history = _history.get(payload.userId, [])
-    history.append(msg)
-    _prune_history(history)
-    _history[payload.userId] = history
-
-    return msg
 
 
 def get_messages(user_id: int) -> List[ChatMessageResponse]:
-    return _history.get(user_id, [])
+    supabase = get_supabase_client()
+
+    result = supabase.table("chat_messages")\
+        .select("*")\
+        .eq("user_id", user_id)\
+        .order("created_at", desc=False)\
+        .execute()
+
+    return [
+        ChatMessageResponse(
+            id=row["id"],
+            userId=row["user_id"],
+            role=row["role"],
+            content=row["content"],
+            created_at=row["created_at"],
+        )
+        for row in result.data
+    ]
 
 
 def get_recent(user_id: int, limit: int = 50) -> List[ChatMessageResponse]:
-    history = _history.get(user_id, [])
-    return history[-limit:] if limit > 0 else []
+    if limit <= 0:
+        return []
+
+    supabase = get_supabase_client()
+
+    result = supabase.table("chat_messages")\
+        .select("*")\
+        .eq("user_id", user_id)\
+        .order("created_at", desc=True)\
+        .limit(limit)\
+        .execute()
+
+    # Reverse to get chronological order
+    messages = [
+        ChatMessageResponse(
+            id=row["id"],
+            userId=row["user_id"],
+            role=row["role"],
+            content=row["content"],
+            created_at=row["created_at"],
+        )
+        for row in reversed(result.data)
+    ]
+
+    return messages
 
 
 def delete_message(user_id: int, message_id: int) -> int | None:
-    history = _history.get(user_id)
-    if not history:
-        return None
-    new_hist = [m for m in history if m.id != message_id]
-    _history[user_id] = new_hist
-    return message_id
+    supabase = get_supabase_client()
+
+    result = supabase.table("chat_messages")\
+        .delete()\
+        .eq("user_id", user_id)\
+        .eq("id", message_id)\
+        .execute()
+
+    if result.data:
+        return message_id
+    return None
 
 
 def delete_all(user_id: int) -> None:
-    _history.pop(user_id, None)
+    supabase = get_supabase_client()
+
+    supabase.table("chat_messages")\
+        .delete()\
+        .eq("user_id", user_id)\
+        .execute()
